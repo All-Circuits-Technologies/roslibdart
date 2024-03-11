@@ -79,6 +79,7 @@ class Ros {
  Future<void> connect({dynamic url}) async {
     this.url = url ?? this.url;
     url ??= this.url;
+
     try {
       // Initialize the connection to the ROS node with a Websocket channel.
       _channel = initializeWebSocketChannel(url);
@@ -86,7 +87,6 @@ class Ros {
           _channel.stream.asBroadcastStream().map((raw) => json.decode(raw));
       // Listen for messages on the connection to update the status.
       _channelListener = stream.listen((data) {
-        //print('INCOMING: $data');
         if (status != Status.connected) {
           status = Status.connected;
           _statusController.add(status);
@@ -100,7 +100,13 @@ class Ros {
       });
 
       await _channel.ready;
+      status = Status.connected;
+      _statusController.add(status);
+
     } on WebSocketChannelException  {
+      status = Status.errored;
+      _statusController.add(status);
+    } catch (error) {
       status = Status.errored;
       _statusController.add(status);
     }
